@@ -1,4 +1,4 @@
-import React, { ReactNode } from 'react';
+import React, { useState } from 'react';
 import {
   IconButton,
   Avatar,
@@ -22,34 +22,68 @@ import {
   MenuItem,
   MenuList,
 } from '@chakra-ui/react';
-import {
-  FiHome,
-  FiTrendingUp,
-  FiCompass,
-  FiStar,
-  FiSettings,
-  FiMenu,
-  FiBell,
-  FiChevronDown,
-} from 'react-icons/fi';
+import { FiMenu } from 'react-icons/fi';
+import { FaSignOutAlt } from 'react-icons/fa';
 import { withProtected } from "~/hook/route";
+import { useQuery, gql } from "@apollo/client";
+import ContentPokemon from "./components/ContentPokemon";
+import { MenuSideBar } from "./styles";
 
-const LinkItems = [
-  { name: 'Home', icon: FiHome },
-  { name: 'Trending', icon: FiTrendingUp },
-  { name: 'Explore', icon: FiCompass },
-  { name: 'Favourites', icon: FiStar },
-  { name: 'Settings', icon: FiSettings },
-];
+const GET_POKEMONS = gql`
+  query pokemons($limit: Int, $offset: Int) {
+    pokemons(limit: $limit, offset: $offset) {
+      count
+      next
+      previous
+      status
+      message
+      results {
+        id
+        url
+        name
+        image
+        artwork
+        dreamworld
+      }
+    }
+  }
+`;
+const gqlVariables = {
+  limit: 1126,
+  offset: 0,
+};
 
 function SidebarWithHeader({ children, auth }) {
-  console.log(auth)
+  const { data: { pokemons: { results = [] } = {} } = {} } = useQuery(GET_POKEMONS, {
+    variables: gqlVariables,
+  });
+
+  const [exibirPokemon, setExibirPokemon] = useState({
+    dreamworld: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/1.svg",
+    id: 1,
+    image: "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png",
+    name: "bulbasaur"
+  });
+
+  function handleExibirPokemon({name,image,dreamworld, id}) {
+    setExibirPokemon({
+      id,
+      name,
+      image,
+      dreamworld
+    });
+  }
+
   const { isOpen, onOpen, onClose } = useDisclosure();
+  
   return (
-    <Box minH="100vh" bg={useColorModeValue('gray.100', 'gray.900')}>
+    <Box height="100vh" bg={useColorModeValue('gray.100', 'gray.900')}>
       <SidebarContent
         onClose={() => onClose}
         display={{ base: 'none', md: 'block' }}
+        pokemons={results}
+        handleExibirPokemon={handleExibirPokemon}
+        auth={auth}
       />
       <Drawer
         autoFocus={false}
@@ -60,19 +94,19 @@ function SidebarWithHeader({ children, auth }) {
         onOverlayClick={onClose}
         size="full">
         <DrawerContent>
-          <SidebarContent onClose={onClose} />
+          <SidebarContent onClose={onClose} pokemons={results} handleExibirPokemon={handleExibirPokemon} />
         </DrawerContent>
       </Drawer>
       {/* mobilenav */}
-      <MobileNav onOpen={onOpen} />
-      <Box ml={{ base: 0, md: 60 }} p="4">
-        {children}
+      <MobileNav onOpen={onOpen} style={{backgroundColor: "#2cb3e8"}} auth={auth} />
+      <Box ml={{ base: 0, md: 60 }} p="4" style={{backgroundColor: "#2cb3e8", minHeight: "calc(100% - 80px)"}}>
+        <ContentPokemon data={exibirPokemon} />
       </Box>
     </Box>
   );
 }
 
-const SidebarContent = ({ onClose, ...rest }) => {
+const SidebarContent = ({ onClose, pokemons, handleExibirPokemon, ...rest }) => {
   return (
     <Box
       transition="3s ease"
@@ -82,18 +116,19 @@ const SidebarContent = ({ onClose, ...rest }) => {
       w={{ base: 'full', md: 60 }}
       pos="fixed"
       h="full"
+      height="100%"
       {...rest}>
-      <Flex h="20" alignItems="center" mx="8" justifyContent="space-between">
-        <Text fontSize="2xl" fontFamily="monospace" fontWeight="bold">
-          Logo
-        </Text>
-        <CloseButton display={{ base: 'flex', md: 'none' }} onClick={onClose} />
-      </Flex>
-      {LinkItems.map((link) => (
-        <NavItem key={link.name} icon={link.icon}>
-          {link.name}
-        </NavItem>
-      ))}
+      <MenuSideBar>
+        <div>
+          POKEDEX&nbsp;&nbsp;
+          <CloseButton display={{ base: 'flex', md: 'none' }} onClick={onClose} />
+        </div>
+        <div>
+          { pokemons?.map((pokemon, index) => (
+            <div onClick={() => handleExibirPokemon(pokemon)} key={index}>{`${index+1} - ${pokemon.name}`}</div>
+          ))}
+        </div>
+      </MenuSideBar>
     </Box>
   );
 };
@@ -129,7 +164,8 @@ const NavItem = ({ icon, children, ...rest }) => {
   );
 };
 
-const MobileNav = ({ onOpen, ...rest }) => {
+const MobileNav = ({ onOpen, handleExibirPokemon, pokemons, auth, ...rest }) => {
+  console.log(auth)
   return (
     <Flex
       ml={{ base: 0, md: 60 }}
@@ -154,55 +190,16 @@ const MobileNav = ({ onOpen, ...rest }) => {
         fontSize="2xl"
         fontFamily="monospace"
         fontWeight="bold">
-        Logo
+        POKEDEX
       </Text>
-
       <HStack spacing={{ base: '0', md: '6' }}>
         <IconButton
           size="lg"
           variant="ghost"
           aria-label="open menu"
-          icon={<FiBell />}
+          icon={<FaSignOutAlt />}
+          onClick={()=>auth.logout(auth.logout)}
         />
-        <Flex alignItems={'center'}>
-          <Menu>
-            <MenuButton
-              py={2}
-              transition="all 0.3s"
-              _focus={{ boxShadow: 'none' }}>
-              <HStack>
-                <Avatar
-                  size={'sm'}
-                  src={
-                    'https://images.unsplash.com/photo-1619946794135-5bc917a27793?ixlib=rb-0.3.5&q=80&fm=jpg&crop=faces&fit=crop&h=200&w=200&s=b616b2c5b373a80ffc9636ba24f7a4a9'
-                  }
-                />
-                <VStack
-                  display={{ base: 'none', md: 'flex' }}
-                  alignItems="flex-start"
-                  spacing="1px"
-                  ml="2">
-                  <Text fontSize="sm">Justina Clark</Text>
-                  <Text fontSize="xs" color="gray.600">
-                    Admin
-                  </Text>
-                </VStack>
-                <Box display={{ base: 'none', md: 'flex' }}>
-                  <FiChevronDown />
-                </Box>
-              </HStack>
-            </MenuButton>
-            <MenuList
-              bg={useColorModeValue('white', 'gray.900')}
-              borderColor={useColorModeValue('gray.200', 'gray.700')}>
-              <MenuItem>Profile</MenuItem>
-              <MenuItem>Settings</MenuItem>
-              <MenuItem>Billing</MenuItem>
-              <MenuDivider />
-              <MenuItem>Sign out</MenuItem>
-            </MenuList>
-          </Menu>
-        </Flex>
       </HStack>
     </Flex>
   );

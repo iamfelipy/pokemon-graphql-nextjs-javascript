@@ -23,7 +23,7 @@ export function AuthProvider(props) {
         setError(error ?? "");
     };
 
-    const logout = async () => {
+    const logout = async (auth) => {
         await AuthService.logout(auth);
         setUser(null);
     };

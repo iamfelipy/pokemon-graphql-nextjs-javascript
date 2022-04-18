@@ -13,10 +13,11 @@ import {
   Text,
   useColorModeValue,
 } from '@chakra-ui/react';
+import Image from 'next/image'
 import { useRouter } from "next/router";
 
 export default function Login({auth}) {
-  const { user, loginWithEmailPassword, error } = auth;
+  const { user, loginWithEmailPassword, signUpEmailPassowrd, error } = auth;
   const router = useRouter();
 
   const inputEmail = useRef(null);
@@ -33,18 +34,21 @@ export default function Login({auth}) {
     loginWithEmailPassword(email, password);
   }
 
+  function signUp(){
+    const email = inputEmail.current.value;
+    const password = inputPassword.current.value;
+    signUpEmailPassowrd(email, password);
+  }
+
   return (
     <Flex
       minH={'100vh'}
       align={'center'}
       justify={'center'}
-      bg={useColorModeValue('gray.50', 'gray.800')}>
+      bg={"white"}>
       <Stack spacing={8} mx={'auto'} maxW={'lg'} py={12} px={6}>
         <Stack align={'center'}>
-          <Heading fontSize={'4xl'}>Sign in to your account</Heading>
-          <Text fontSize={'lg'} color={'gray.600'}>
-            to enjoy all of our cool <Link color={'blue.400'}>features</Link> ✌️
-          </Text>
+          <Heading fontSize={'4xl'}>POKEDEX</Heading>
         </Stack>
         <Box
           rounded={'lg'}
@@ -52,8 +56,14 @@ export default function Login({auth}) {
           boxShadow={'lg'}
           p={8}>
           <Stack spacing={4}>
+            <Image 
+              src="/images/pokeball.svg" 
+              alt="Landscape picture"
+              width={150}
+              height={150}
+            />
             <FormControl id="email">
-              <FormLabel>Email address</FormLabel>
+              <FormLabel>Email</FormLabel>
               <Input type="email" ref={inputEmail}/>
             </FormControl>
             <FormControl id="password">
@@ -71,22 +81,16 @@ export default function Login({auth}) {
                 )
               }
               <Button
-                bg={'blue.400'}
+                bg={"#c04c4b"}
                 color={'white'}
-                _hover={{
-                  bg: 'blue.500',
-                }}
                 onClick={login}
                 >
                 Sign in
               </Button>
               <Button
-                bg={'blue.400'}
-                color={'white'}
-                _hover={{
-                  bg: 'blue.500',
-                }}
-                onClick={login}
+                bg={'white'}
+                color={'#c04c4b'}
+                onClick={signUp}
                 >
                 Sign up
               </Button>

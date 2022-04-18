@@ -1,6 +1,8 @@
 import { useRouter } from "next/router";
 import React from "react";
 import useAuth from "./auth";
+import ClientOnly from "~/components/ClientOnly";
+
 
 export function withPublic(Component) {
 	return function WithPublic(props) {
